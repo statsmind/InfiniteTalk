@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  infinitetalk-api:
+    build: .
+    container_name: infinitetalk-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./weights:/app/weights
+      - ./results:/app/results
+      - ./temp:/app/temp
+    environment:
+      - CKPT_DIR=/app/weights/Wan2.1-I2V-14B-480P
+      - WAV2VEC_DIR=/app/weights/chinese-wav2vec2-base
+      - INFINITETALK_DIR=/app/weights/InfiniteTalk/single/infinitetalk.safetensors
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
