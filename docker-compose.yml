@@ -5,7 +5,7 @@ services:
     image: statsmind/infinitetalk
     container_name: infinitetalk-api
     ports:
-      - "18000:8000"
+      - "18001:8000"
     volumes:
       - /opt/infinitetalk/weights:/app/weights
       - /opt/indextts/uploads:/app/uploads
