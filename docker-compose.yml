@@ -7,9 +7,10 @@ services:
     ports:
       - "18000:8000"
     volumes:
-      - ./weights:/app/weights
-      - ./results:/app/results
-      - ./temp:/app/temp
+      - /opt/infinitetalk/weights:/app/weights
+      - /opt/indextts/uploads:/app/uploads
+      - /opt/indextts/outputs:/app/results
+      - /opt/infinitetalk/temp:/app/temp
     environment:
       - CKPT_DIR=/app/weights/Wan2.1-I2V-14B-480P
       - WAV2VEC_DIR=/app/weights/chinese-wav2vec2-base
