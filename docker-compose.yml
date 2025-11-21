@@ -2,10 +2,10 @@ version: '3.8'
 
 services:
   infinitetalk-api:
-    build: .
+    image: statsmind/infinitetalk
     container_name: infinitetalk-api
     ports:
-      - "8000:8000"
+      - "18000:8000"
     volumes:
       - ./weights:/app/weights
       - ./results:/app/results

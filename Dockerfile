@@ -41,7 +41,7 @@ RUN --mount=type=cache,target=/root/.cache/pip pip3 install -U xformers==0.0.28 
 RUN --mount=type=cache,target=/root/.cache/pip pip3 install misaki[en] ninja psutil packaging wheel
 RUN wget https://gh-proxy.com/github.com/Dao-AILab/flash-attention/releases/download/v2.7.4.post1/flash_attn-2.7.4.post1+cu12torch2.4cxx11abiFALSE-cp310-cp310-linux_x86_64.whl
 RUN --mount=type=cache,target=/root/.cache/pip pip3 install flash_attn-2.7.4.post1+cu12torch2.4cxx11abiFALSE-cp310-cp310-linux_x86_64.whl
-#RUN --mount=type=cache,target=/root/.cache/pip pip3 install flash_attn==2.7.4.post1
+#RUN --mount=type=cache,target=/root/.cache/pip MAX_JOBS=4 CUDA_HOME=/usr/local/cuda pip3 install flash_attn==2.7.4.post1 --no-build-isolation
 
 RUN --mount=type=cache,target=/root/.cache/pip pip3 install -r requirements.txt
 # 安装 librosa 通过 conda
