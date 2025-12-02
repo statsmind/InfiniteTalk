@@ -204,7 +204,7 @@ async def startup_event():
                 self.quant_dir = quant_dir
                 self.dit_path = None
                 self.lora_dir = None
-                self.lora_scale = [1.2]
+                self.lora_scale = [1.0]
                 self.t5_fsdp = False
                 self.dit_fsdp = False
                 self.t5_cpu = False
