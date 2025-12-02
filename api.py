@@ -187,9 +187,9 @@ async def health_check():
 @app.post("/generate", response_model=GenerationResponse)
 async def generate_video(
     prompt: str = Form(...),
-    image: UploadFile = File(...),
-    audio1: UploadFile = File(...),
-    audio2: Optional[UploadFile] = File(None),
+    image: str = Form(...),
+    audio1: str = Form(...),
+    audio2: Optional[str] = Form(None),
     size: str = Form("infinitetalk-480"),
     sample_steps: int = Form(40),
     text_guide_scale: float = Form(5.0),
@@ -208,20 +208,20 @@ async def generate_video(
         os.makedirs(audio_save_dir, exist_ok=True)
         
         # 保存上传的文件
-        image_path = os.path.join(work_dir, "input_image.png")
-        audio1_path = os.path.join(work_dir, "audio1.wav")
+        image_path = os.path.join("uploads", image) # os.path.join(work_dir, "input_image.png")
+        audio1_path = os.path.join("uploads", audio1) # os.path.join(work_dir, "audio1.wav")
         
-        with open(image_path, "wb") as f:
-            shutil.copyfileobj(image.file, f)
-            
-        with open(audio1_path, "wb") as f:
-            shutil.copyfileobj(audio1.file, f)
+        # with open(image_path, "wb") as f:
+        #     shutil.copyfileobj(image.file, f)
+        #
+        # with open(audio1_path, "wb") as f:
+        #     shutil.copyfileobj(audio1.file, f)
             
         audio2_path = None
         if audio2:
-            audio2_path = os.path.join(work_dir, "audio2.wav")
-            with open(audio2_path, "wb") as f:
-                shutil.copyfileobj(audio2.file, f)
+            audio2_path = os.path.join("uploads", audio2) # os.path.join(work_dir, "audio2.wav")
+            # with open(audio2_path, "wb") as f:
+            #     shutil.copyfileobj(audio2.file, f)
         
         # 构建输入数据
         input_data = {
@@ -301,8 +301,8 @@ async def generate_video(
         # 保存视频
         formatted_time = datetime.now().strftime("%Y%m%d_%H%M%S")
         formatted_prompt = prompt.replace(" ", "_").replace("/", "_")[:50]
-        save_file = f"results/{job_id}_{formatted_prompt}_{formatted_time}"
-        os.makedirs("results", exist_ok=True)
+        save_file = f"outputs/{job_id}_{formatted_prompt}_{formatted_time}"
+        os.makedirs("outputs", exist_ok=True)
         
         save_video_ffmpeg(video, save_file, [input_data['video_audio']], high_quality_save=False)
         final_video_path = f"{save_file}.mp4"
@@ -321,7 +321,7 @@ async def generate_video(
 
 @app.get("/video/{video_path}")
 async def get_video(video_path: str):
-    file_path = f"results/{video_path}"
+    file_path = f"outputs/{video_path}"
     if os.path.exists(file_path):
         return FileResponse(file_path)
     else:
