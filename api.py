@@ -3,8 +3,9 @@ import json
 import uuid
 import shutil
 import logging
+import random
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional
 from pydantic import BaseModel
 
 import torch
@@ -25,252 +26,10 @@ import pyloudnorm as pyln
 import numpy as np
 from einops import rearrange
 import soundfile as sf
-import argparse
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-def _validate_args(args):
-    # Basic check
-    assert args.ckpt_dir is not None, "Please specify the checkpoint directory."
-    assert args.task in WAN_CONFIGS, f"Unsupport task: {args.task}"
-
-    # The default sampling steps are 40 for image-to-video tasks and 50 for text-to-video tasks.
-    if args.sample_steps is None:
-        args.sample_steps = 40
-
-    if args.sample_shift is None:
-        if args.size == 'infinitetalk-480':
-            args.sample_shift = 7
-        elif args.size == 'infinitetalk-720':
-            args.sample_shift = 11
-        else:
-            raise NotImplementedError(f'Not supported size')
-
-    args.base_seed = args.base_seed if args.base_seed >= 0 else random.randint(
-        0, 99999999)
-    # Size check
-    assert args.size in SUPPORTED_SIZES[
-        args.
-        task], f"Unsupport size {args.size} for task {args.task}, supported sizes are: {', '.join(SUPPORTED_SIZES[args.task])}"
-
-
-def _parse_args():
-    parser = argparse.ArgumentParser(
-        description="Generate a image or video from a text prompt or image using Wan"
-    )
-    parser.add_argument(
-        "--task",
-        type=str,
-        default="infinitetalk-14B",
-        choices=list(WAN_CONFIGS.keys()),
-        help="The task to run.")
-    parser.add_argument(
-        "--size",
-        type=str,
-        default="infinitetalk-480",
-        choices=list(SIZE_CONFIGS.keys()),
-        help="The buckget size of the generated video. The aspect ratio of the output video will follow that of the input image."
-    )
-    parser.add_argument(
-        "--frame_num",
-        type=int,
-        default=81,
-        help="How many frames to be generated in one clip. The number should be 4n+1"
-    )
-    parser.add_argument(
-        "--max_frame_num",
-        type=int,
-        default=1000,
-        help="The max frame lenght of the generated video."
-    )
-    parser.add_argument(
-        "--ckpt_dir",
-        type=str,
-        default="weights/Wan2.1-I2V-14B-480P",
-        help="The path to the Wan checkpoint directory.")
-    parser.add_argument(
-        "--infinitetalk_dir",
-        type=str,
-        default="weights/InfiniteTalk/single/infinitetalk.safetensors",
-        help="The path to the InfiniteTalk checkpoint directory.")
-    parser.add_argument(
-        "--quant_dir",
-        type=str,
-        default=None,
-        help="The path to the Wan quant checkpoint directory.")
-    parser.add_argument(
-        "--wav2vec_dir",
-        type=str,
-        default="weights/chinese-wav2vec2-base",
-        help="The path to the wav2vec checkpoint directory.")
-    parser.add_argument(
-        "--dit_path",
-        type=str,
-        default=None,
-        help="The path to the Wan checkpoint directory.")
-    parser.add_argument(
-        "--lora_dir",
-        type=str,
-        nargs='+',
-        default=None,
-        help="The paths to the LoRA checkpoint files."
-    )
-    parser.add_argument(
-        "--lora_scale",
-        type=float,
-        nargs='+',
-        default=[1.2],
-        help="Controls how much to influence the outputs with the LoRA parameters. Accepts multiple float values."
-    )
-    parser.add_argument(
-        "--offload_model",
-        type=str2bool,
-        default=None,
-        help="Whether to offload the model to CPU after each model forward, reducing GPU memory usage."
-    )
-    parser.add_argument(
-        "--ulysses_size",
-        type=int,
-        default=1,
-        help="The size of the ulysses parallelism in DiT.")
-    parser.add_argument(
-        "--ring_size",
-        type=int,
-        default=1,
-        help="The size of the ring attention parallelism in DiT.")
-    parser.add_argument(
-        "--t5_fsdp",
-        action="store_true",
-        default=False,
-        help="Whether to use FSDP for T5.")
-    parser.add_argument(
-        "--t5_cpu",
-        action="store_true",
-        default=False,
-        help="Whether to place T5 model on CPU.")
-    parser.add_argument(
-        "--dit_fsdp",
-        action="store_true",
-        default=False,
-        help="Whether to use FSDP for DiT.")
-    parser.add_argument(
-        "--save_file",
-        type=str,
-        default=None,
-        help="The file to save the generated image or video to.")
-    parser.add_argument(
-        "--audio_save_dir",
-        type=str,
-        default='save_audio',
-        help="The path to save the audio embedding.")
-    parser.add_argument(
-        "--base_seed",
-        type=int,
-        default=42,
-        help="The seed to use for generating the image or video.")
-    parser.add_argument(
-        "--input_json",
-        type=str,
-        default='examples.json',
-        help="[meta file] The condition path to generate the video.")
-    parser.add_argument(
-        "--motion_frame",
-        type=int,
-        default=9,
-        help="Driven frame length used in the mode of long video genration.")
-    parser.add_argument(
-        "--mode",
-        type=str,
-        default="clip",
-        choices=['clip', 'streaming'],
-        help="clip: generate one video chunk, streaming: long video generation")
-    parser.add_argument(
-        "--sample_steps", type=int, default=None, help="The sampling steps.")
-    parser.add_argument(
-        "--sample_shift",
-        type=float,
-        default=None,
-        help="Sampling shift factor for flow matching schedulers.")
-    parser.add_argument(
-        "--sample_text_guide_scale",
-        type=float,
-        default=5.0,
-        help="Classifier free guidance scale for text control.")
-    parser.add_argument(
-        "--sample_audio_guide_scale",
-        type=float,
-        default=4.0,
-        help="Classifier free guidance scale for audio control.")
-    parser.add_argument(
-        "--num_persistent_param_in_dit",
-        type=int,
-        default=None,
-        required=False,
-        help="Maximum parameter quantity retained in video memory, small number to reduce VRAM required",
-    )
-    parser.add_argument(
-        "--audio_mode",
-        type=str,
-        default="localfile",
-        choices=['localfile', 'tts'],
-        help="localfile: audio from local wav file, tts: audio from TTS")
-    parser.add_argument(
-        "--use_teacache",
-        action="store_true",
-        default=False,
-        help="Enable teacache for video generation."
-    )
-    parser.add_argument(
-        "--teacache_thresh",
-        type=float,
-        default=0.2,
-        help="Threshold for teacache."
-    )
-    parser.add_argument(
-        "--use_apg",
-        action="store_true",
-        default=False,
-        help="Enable adaptive projected guidance for video generation (APG)."
-    )
-    parser.add_argument(
-        "--apg_momentum",
-        type=float,
-        default=-0.75,
-        help="Momentum used in adaptive projected guidance (APG)."
-    )
-    parser.add_argument(
-        "--apg_norm_threshold",
-        type=float,
-        default=55,
-        help="Norm threshold used in adaptive projected guidance (APG)."
-    )
-    parser.add_argument(
-        "--color_correction_strength",
-        type=float,
-        default=1.0,
-        help="strength for color correction [0.0 -- 1.0]."
-    )
-    parser.add_argument(
-        "--scene_seg",
-        action="store_true",
-        default=False,
-        help="Enable scene segmentation for input video."
-    )
-    parser.add_argument(
-        "--quant",
-        type=str,
-        default=None,
-        help="Quantization type, must be 'int8' or 'fp8'."
-    )
-
-    args = parser.parse_args()
-
-    _validate_args(args)
-
-    return args
 
 # 初始化FastAPI应用
 app = FastAPI(title="InfiniteTalk API", description="API for InfiniteTalk: Audio-driven Video Generation", version="1.0.0")
@@ -301,7 +60,7 @@ class GenerationRequest(BaseModel):
     max_frame_num: int = 1000
     audio_type: str = "para"  # para or add
     color_correction_strength: float = 1.0
-    use_teacache: bool = False,
+    use_teacache: bool = False
     use_apg: bool = False
 
 class GenerationResponse(BaseModel):
@@ -372,6 +131,30 @@ def audio_prepare_single(audio_path, sample_rate=16000):
     human_speech_array = loudness_norm(human_speech_array, sr)
     return human_speech_array
 
+def validate_args(args):
+    # Basic check
+    assert args.ckpt_dir is not None, "Please specify the checkpoint directory."
+    assert args.task in WAN_CONFIGS, f"Unsupport task: {args.task}"
+
+    # The default sampling steps are 40 for image-to-video tasks and 50 for text-to-video tasks.
+    if args.sample_steps is None:
+        args.sample_steps = 40
+
+    if args.sample_shift is None:
+        if args.size == 'infinitetalk-480':
+            args.sample_shift = 7
+        elif args.size == 'infinitetalk-720':
+            args.sample_shift = 11
+        else:
+            raise NotImplementedError(f'Not supported size')
+
+    args.base_seed = args.base_seed if args.base_seed >= 0 else random.randint(
+        0, 99999999)
+    # Size check
+    assert args.size in SUPPORTED_SIZES[
+        args.
+        task], f"Unsupport size {args.size} for task {args.task}, supported sizes are: {', '.join(SUPPORTED_SIZES[args.task])}"
+
 @app.on_event("startup")
 async def startup_event():
     global wan_i2v, wav2vec_feature_extractor, audio_encoder
@@ -396,19 +179,47 @@ async def startup_event():
         cfg = WAN_CONFIGS["infinitetalk-14B"]
         wav2vec_feature_extractor, audio_encoder = custom_init('cpu', wav2vec_dir)
         
+        # 创建一个模拟的args对象用于初始化
+        class Args:
+            def __init__(self):
+                self.task = "infinitetalk-14B"
+                self.ckpt_dir = ckpt_dir
+                self.infinitetalk_dir = infinitetalk_dir
+                self.wav2vec_dir = wav2vec_dir
+                self.quant_dir = None
+                self.dit_path = None
+                self.lora_dir = None
+                self.lora_scale = [1.2]
+                self.t5_fsdp = False
+                self.dit_fsdp = False
+                self.t5_cpu = False
+                self.quant = None
+                self.ulysses_size = 1
+                self.ring_size = 1
+                self.num_persistent_param_in_dit = None
+                self.offload_model = None
+                self.base_seed = 42
+                self.sample_steps = None
+                self.sample_shift = None
+                self.size = "infinitetalk-480"
+                
+        args = Args()
+        validate_args(args)
+        
         wan_i2v = wan.InfiniteTalkPipeline(
             config=cfg,
             checkpoint_dir=ckpt_dir,
+            quant_dir=args.quant_dir,
             device_id=0,
             rank=0,
-            t5_fsdp=False,
-            dit_fsdp=False,
+            t5_fsdp=args.t5_fsdp,
+            dit_fsdp=args.dit_fsdp,
             use_usp=False,
-            t5_cpu=False,
-            lora_dir=None,
-            lora_scales=[1.2],
-            quant=None,
-            dit_path=None,
+            t5_cpu=args.t5_cpu,
+            lora_dir=args.lora_dir,
+            lora_scales=args.lora_scale,
+            quant=args.quant,
+            dit_path=args.dit_path,
             infinitetalk_dir=infinitetalk_dir
         )
         
@@ -431,9 +242,9 @@ async def health_check():
 @app.post("/generate", response_model=GenerationResponse)
 async def generate_video(
     prompt: str = Form(...),
-    image: str = Form(...),
-    audio1: str = Form(...),
-    audio2: Optional[str] = Form(None),
+    image: str = File(...),
+    audio1: str = File(...),
+    audio2: Optional[str] = File(None),
     size: str = Form("infinitetalk-480"),
     sample_steps: int = Form(40),
     text_guide_scale: float = Form(5.0),
@@ -453,20 +264,12 @@ async def generate_video(
         os.makedirs(audio_save_dir, exist_ok=True)
         
         # 保存上传的文件
-        image_path = os.path.join("uploads", image) # os.path.join(work_dir, "input_image.png")
-        audio1_path = os.path.join("uploads", audio1) # os.path.join(work_dir, "audio1.wav")
-        
-        # with open(image_path, "wb") as f:
-        #     shutil.copyfileobj(image.file, f)
-        #
-        # with open(audio1_path, "wb") as f:
-        #     shutil.copyfileobj(audio1.file, f)
-            
+        image_path = os.path.join("uploads", image)
+        audio1_path = os.path.join("uploads", audio1)
+
         audio2_path = None
         if audio2:
-            audio2_path = os.path.join("uploads", audio2) # os.path.join(work_dir, "audio2.wav")
-            # with open(audio2_path, "wb") as f:
-            #     shutil.copyfileobj(audio2.file, f)
+            audio2_path = os.path.join("uploads", audio2)
         
         # 构建输入数据
         input_data = {
@@ -522,6 +325,27 @@ async def generate_video(
                 sample_shift = 11
             else:
                 sample_shift = 7
+                
+        # 创建一个模拟的args对象用于生成
+        class ExtraArgs:
+            def __init__(self):
+                self.use_teacache = False
+                self.teacache_thresh = 0.2
+                self.use_apg = False
+                self.apg_momentum = -0.75
+                self.apg_norm_threshold = 55
+                self.mode = "streaming"
+                self.frame_num = 81
+                self.sample_steps = sample_steps
+                self.sample_shift = sample_shift
+                self.sample_text_guide_scale = text_guide_scale
+                self.sample_audio_guide_scale = audio_guide_scale
+                self.motion_frame = motion_frame
+                self.color_correction_strength = 1.0
+                self.max_frame_num = max_frame_num
+                self.audio_save_dir = audio_save_dir
+                
+        extra_args = ExtraArgs()
             
         # 生成视频
         logger.info("Generating video...")
@@ -538,7 +362,7 @@ async def generate_video(
             offload_model=True,
             max_frames_num=max_frame_num,
             color_correction_strength=1.0,
-            extra_args=_parse_args(),
+            extra_args=extra_args,
         )
         
         # 保存视频
@@ -559,7 +383,6 @@ async def generate_video(
         )
         
     except Exception as e:
-        raise e
         logger.error(f"Error generating video: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -570,8 +393,6 @@ async def get_video(video_path: str):
         return FileResponse(file_path)
     else:
         raise HTTPException(status_code=404, detail="Video not found")
-
-
 
 if __name__ == "__main__":
     import uvicorn
