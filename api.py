@@ -211,7 +211,7 @@ async def startup_event():
                 self.quant = "fp8"  # 默认使用fp8量化
                 self.ulysses_size = 1
                 self.ring_size = 1
-                self.num_persistent_param_in_dit = None
+                self.num_persistent_param_in_dit = 0
                 self.offload_model = None
                 self.base_seed = 42
                 self.sample_steps = None
