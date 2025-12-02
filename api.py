@@ -296,10 +296,7 @@ async def generate_video(
             offload_model=True,
             max_frames_num=max_frame_num,
             color_correction_strength=1.0,
-            extra_args={
-                "use_teacache": False,
-                "teacache_thresh": 0.2
-            },
+            extra_args=GenerationRequest(),
         )
         
         # 保存视频
