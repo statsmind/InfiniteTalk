@@ -59,6 +59,8 @@ class GenerationRequest(BaseModel):
     max_frame_num: int = 1000
     audio_type: str = "para"  # para or add
     color_correction_strength: float = 1.0
+    use_teacache: bool = False,
+    use_apg: bool = False
 
 class GenerationResponse(BaseModel):
     video_path: str
@@ -197,7 +199,8 @@ async def generate_video(
     seed: int = Form(42),
     motion_frame: int = Form(9),
     max_frame_num: int = Form(1000),
-    audio_type: str = Form("para")
+    audio_type: str = Form("para"),
+    sample_shift: Optional[float] = Form(None),
 ):
     try:
         # 创建临时工作目录
