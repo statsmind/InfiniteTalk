@@ -260,8 +260,8 @@ async def health_check():
 @app.post("/generate", response_model=GenerationResponse)
 async def generate_video(
         prompt: str = Form(...),
-        image: UploadFile = File(...),
-        audio: UploadFile = File(...),
+        image: str = File(...),
+        audio: str = File(...),
         size: str = Form("infinitetalk-480"),
         sample_steps: int = Form(40),
         text_guide_scale: float = Form(5.0),
@@ -281,14 +281,8 @@ async def generate_video(
         os.makedirs(audio_save_dir, exist_ok=True)
 
         # 保存上传的文件
-        image_path = os.path.join(work_dir, "input_image.png")
-        audio_path = os.path.join(work_dir, "audio.wav")
-
-        with open(image_path, "wb") as f:
-            shutil.copyfileobj(image.file, f)
-
-        with open(audio_path, "wb") as f:
-            shutil.copyfileobj(audio.file, f)
+        image_path = os.path.join("uploads", image)
+        audio_path = os.path.join("uploads", audio)
 
         # 构建输入数据
         input_data = {
