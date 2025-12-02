@@ -48,7 +48,7 @@ wav2vec_feature_extractor = None
 audio_encoder = None
 
 class GenerationRequest(BaseModel):
-    prompt: str
+    prompt: str = ""
     size: str = "infinitetalk-480"
     sample_steps: int = 40
     sample_shift: Optional[float] = None
