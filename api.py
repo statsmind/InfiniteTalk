@@ -320,6 +320,7 @@ async def generate_video(
         )
         
     except Exception as e:
+        raise e
         logger.error(f"Error generating video: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
