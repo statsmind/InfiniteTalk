@@ -89,12 +89,12 @@ def _parse_args():
     parser.add_argument(
         "--ckpt_dir",
         type=str,
-        default=None,
+        default="weights/Wan2.1-I2V-14B-480P",
         help="The path to the Wan checkpoint directory.")
     parser.add_argument(
         "--infinitetalk_dir",
         type=str,
-        default=None,
+        default="weights/InfiniteTalk/single/infinitetalk.safetensors",
         help="The path to the InfiniteTalk checkpoint directory.")
     parser.add_argument(
         "--quant_dir",
@@ -104,7 +104,7 @@ def _parse_args():
     parser.add_argument(
         "--wav2vec_dir",
         type=str,
-        default=None,
+        default="weights/chinese-wav2vec2-base",
         help="The path to the wav2vec checkpoint directory.")
     parser.add_argument(
         "--dit_path",
