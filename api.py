@@ -272,13 +272,11 @@ async def generate_video(
         # 设置采样参数
         if sample_shift is None:
             if size == 'infinitetalk-480':
-                sample_shift_val = 7
+                sample_shift = 7
             elif size == 'infinitetalk-720':
-                sample_shift_val = 11
+                sample_shift = 11
             else:
-                sample_shift_val = 7
-        else:
-            sample_shift_val = sample_shift
+                sample_shift = 7
             
         # 生成视频
         logger.info("Generating video...")
@@ -287,7 +285,7 @@ async def generate_video(
             size_buckget=size,
             motion_frame=motion_frame,
             frame_num=81,
-            shift=sample_shift_val,
+            shift=sample_shift,
             sampling_steps=sample_steps,
             text_guide_scale=text_guide_scale,
             audio_guide_scale=audio_guide_scale,
@@ -295,7 +293,10 @@ async def generate_video(
             offload_model=True,
             max_frames_num=max_frame_num,
             color_correction_strength=1.0,
-            extra_args=None,
+            extra_args={
+                "use_teacache": False,
+                "teacache_thresh": 0.2
+            },
         )
         
         # 保存视频
@@ -329,4 +330,4 @@ async def get_video(video_path: str):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)

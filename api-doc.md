@@ -62,7 +62,7 @@ Generate a talking avatar video from an image and audio input.
 
 #### Curl Example (Single Person):
 ```bash
-curl -X POST http://localhost:8000/generate \
+curl -X POST http://localhost:18001/generate \
   -F "prompt=Hello, how are you today?" \
   -F "image=@input_image.png" \
   -F "audio1=@speech1.wav" \
