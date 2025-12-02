@@ -166,7 +166,7 @@ async def startup_event():
     ckpt_dir = os.getenv("CKPT_DIR", "./weights/Wan2.1-I2V-14B-480P")
     wav2vec_dir = os.getenv("WAV2VEC_DIR", "./weights/chinese-wav2vec2-base")
     infinitetalk_dir = os.getenv("INFINITETALK_DIR", "./weights/InfiniteTalk/single/infinitetalk.safetensors")
-    quant_dir = os.getenv("INFINITETALK_DIR", "./weights/InfiniteTalk/quant_models")
+    quant_dir = os.getenv("INFINITETALK_DIR", "./weights/InfiniteTalk/quant_models/infinitetalk_single_fp8.safetensors")
 
     # 检查模型路径是否存在
     if not os.path.exists(ckpt_dir):
@@ -194,7 +194,7 @@ async def startup_event():
                 self.t5_fsdp = False
                 self.dit_fsdp = False
                 self.t5_cpu = False
-                self.quant = "int8"
+                self.quant = "fp8"
                 self.ulysses_size = 1
                 self.ring_size = 1
                 self.num_persistent_param_in_dit = None
