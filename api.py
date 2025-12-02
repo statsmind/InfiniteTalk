@@ -166,7 +166,8 @@ async def startup_event():
     ckpt_dir = os.getenv("CKPT_DIR", "./weights/Wan2.1-I2V-14B-480P")
     wav2vec_dir = os.getenv("WAV2VEC_DIR", "./weights/chinese-wav2vec2-base")
     infinitetalk_dir = os.getenv("INFINITETALK_DIR", "./weights/InfiniteTalk/single/infinitetalk.safetensors")
-    
+    quant_dir = os.getenv("INFINITETALK_DIR", "./weights/InfiniteTalk/quant_models")
+
     # 检查模型路径是否存在
     if not os.path.exists(ckpt_dir):
         logger.warning(f"Checkpoint directory {ckpt_dir} does not exist")
@@ -186,14 +187,14 @@ async def startup_event():
                 self.ckpt_dir = ckpt_dir
                 self.infinitetalk_dir = infinitetalk_dir
                 self.wav2vec_dir = wav2vec_dir
-                self.quant_dir = None
+                self.quant_dir = quant_dir
                 self.dit_path = None
                 self.lora_dir = None
                 self.lora_scale = [1.2]
                 self.t5_fsdp = False
                 self.dit_fsdp = False
                 self.t5_cpu = False
-                self.quant = None
+                self.quant = "int8"
                 self.ulysses_size = 1
                 self.ring_size = 1
                 self.num_persistent_param_in_dit = None
