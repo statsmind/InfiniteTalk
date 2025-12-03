@@ -1,0 +1,13 @@
+# InfiniteTalk API 额外依赖
+# 在已有的 InfiniteTalk 环境基础上，额外安装这些包
+
+# FastAPI 核心
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+
+# Pydantic (FastAPI 依赖)
+pydantic>=2.5.0
+
+# 其他依赖
+aiofiles>=23.2.1

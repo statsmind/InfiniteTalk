@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  infinitetalk-api:
+    image: statsmind/infinitetalk
+    container_name: infinitetalk-api
+    ports:
+      - "18001:8000"
+    volumes:
+      - /opt/infinitetalk/weights:/app/weights
+      - /opt/indextts/uploads:/app/uploads
+      - /opt/indextts/outputs:/app/results
+      - /opt/infinitetalk/temp:/app/temp
+      - ./api.py:/app/api.py
+    environment:
+      - CKPT_DIR=/app/weights/Wan2.1-I2V-14B-480P
+      - WAV2VEC_DIR=/app/weights/chinese-wav2vec2-base
+      - INFINITETALK_DIR=/app/weights/InfiniteTalk/single/infinitetalk.safetensors
+      - QUANT_DIR=/app/weights/InfiniteTalk/quant_models/infinitetalk_single_int8.safetensors"
+      - QUANT=int8
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
