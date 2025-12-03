@@ -29,6 +29,8 @@ RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
 
 # 安装 Python 包
 COPY requirements.txt .
+COPY requirements-api.txt .
+
 RUN --mount=type=cache,target=/root/.cache/pip pip3 install --upgrade pip
 #RUN pip3 install torch==2.4.1 torchvision==0.19.1 torchaudio==2.4.1 --index-url https://download.pytorch.org/whl/cu129
 #RUN pip3 install -U xformers==0.0.28 --index-url https://download.pytorch.org/whl/cu121
