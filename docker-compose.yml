@@ -11,7 +11,7 @@ services:
       - /opt/indextts/uploads:/app/uploads
       - /opt/indextts/outputs:/app/results
       - /opt/infinitetalk/temp:/app/temp
-      - ./api.py:/app/api.py
+      - ./api/api_main.py:/app/api/api_main.py
     environment:
       - CKPT_DIR=/app/weights/Wan2.1-I2V-14B-480P
       - WAV2VEC_DIR=/app/weights/chinese-wav2vec2-base
