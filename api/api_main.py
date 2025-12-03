@@ -24,8 +24,10 @@ from .config import GenerationConfig, ServerConfig, TaskConfig
 from .file_handler import file_handler
 from .model_manager import model_manager
 from .task_queue import TaskStatus, task_queue
+import warnings
 
 torch.set_float32_matmul_precision('high')
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 logging.basicConfig(
     level=logging.INFO, format="[%(asctime)s] %(levelname)s: %(message)s"
