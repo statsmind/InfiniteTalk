@@ -29,7 +29,6 @@ RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
 
 # 安装 Python 包
 COPY requirements.txt .
-COPY requirements-api.txt .
 
 RUN --mount=type=cache,target=/root/.cache/pip pip3 install --upgrade pip
 #RUN pip3 install torch==2.4.1 torchvision==0.19.1 torchaudio==2.4.1 --index-url https://download.pytorch.org/whl/cu129
@@ -47,6 +46,8 @@ RUN --mount=type=cache,target=/root/.cache/pip pip3 install flash_attn-2.7.4.pos
 #RUN --mount=type=cache,target=/root/.cache/pip MAX_JOBS=4 CUDA_HOME=/usr/local/cuda pip3 install torch flash_attn==2.7.4.post1 --no-build-isolation
 
 RUN --mount=type=cache,target=/root/.cache/pip pip3 install -r requirements.txt
+
+COPY requirements-api.txt .
 RUN --mount=type=cache,target=/root/.cache/pip pip3 install -r requirements-api.txt
 # 安装 librosa 通过 conda
 #RUN --mount=type=cache,target=/root/.cache/pip pip3 install auxlib conda==4.3.13

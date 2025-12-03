@@ -11,3 +11,6 @@ pydantic>=2.5.0
 
 # 其他依赖
 aiofiles>=23.2.1
+
+# fix
+xfuser==0.4.4
