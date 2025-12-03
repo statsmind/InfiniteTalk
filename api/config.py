@@ -104,7 +104,7 @@ class GenerationConfig:
 
     # 生成模式
     MODE = "streaming"  # clip 或 streaming
-    MOTION_FRAME = 9
+    MOTION_FRAME = 6 # 9 default
 
     # LoRA 参数
     LORA_SCALE = [1.0]
@@ -114,7 +114,7 @@ class GenerationConfig:
     COLOR_CORRECTION_STRENGTH = 1.0
 
     # 加速选项
-    USE_TEACACHE = False
+    USE_TEACACHE = True
     TEACACHE_THRESH = 0.2
     USE_APG = False
     APG_MOMENTUM = -0.75
