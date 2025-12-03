@@ -417,9 +417,9 @@ async def root():
 @app.post("/api/tasks", response_model=TaskCreateResponse)
 async def create_task(
     prompt: str = Form(..., description="视频描述提示词"),
-    media_file: UploadFile = File(..., description="输入的图像或视频文件"),
-    audio1_file: UploadFile = File(..., description="第一个人的音频文件"),
-    audio2_file: Optional[UploadFile] = File(None, description="第二个人的音频文件（多人时需要）"),
+    media_file: str = File(..., description="输入的图像或视频文件"),
+    audio1_file: str = File(..., description="第一个人的音频文件"),
+    audio2_file: Optional[str] = File(None, description="第二个人的音频文件（多人时需要）"),
     audio_type: str = Form("single", description="音频类型: single, multi_add, multi_para"),
     size: str = Form(GenerationConfig.SIZE, description="分辨率: infinitetalk-480 或 infinitetalk-720"),
     sample_steps: int = Form(GenerationConfig.SAMPLE_STEPS, description="采样步数"),
@@ -448,7 +448,7 @@ async def create_task(
             )
 
         # 创建任务
-        media_ext = Path(media_file.filename).suffix
+        media_ext = Path(media_file).suffix
         input_type = (
             "video"
             if media_ext.lower() in TaskConfig.ALLOWED_VIDEO_EXTENSIONS
@@ -460,8 +460,8 @@ async def create_task(
             input_type=input_type,
             audio_type=audio_type,
             media_ext=media_ext,
-            audio1_ext=Path(audio1_file.filename).suffix,
-            audio2_ext=Path(audio2_file.filename).suffix if audio2_file else None,
+            audio1_ext=Path(audio1_file).suffix,
+            audio2_ext=Path(audio2_file).suffix if audio2_file else None,
             size=size,
             sample_steps=sample_steps,
             sample_shift=sample_shift,
@@ -479,15 +479,15 @@ async def create_task(
         )
 
         # 保存上传的文件
-        success, path, error = await file_handler.save_upload_file(
-            media_file, task.task_id, "media"
+        success, path, error = await file_handler.save_file(
+            os.path.join(TaskConfig.UPLOAD_DIR, media_file), task.task_id, "media"
         )
         if not success:
             task_queue.delete_task(task.task_id)
             raise HTTPException(status_code=400, detail=error)
 
-        success, path, error = await file_handler.save_upload_file(
-            audio1_file, task.task_id, "audio1"
+        success, path, error = await file_handler.save_file(
+            os.path.join(TaskConfig.UPLOAD_DIR, audio1_file), task.task_id, "audio1"
         )
         if not success:
             file_handler.delete_task_files(task.task_id)
@@ -495,8 +495,8 @@ async def create_task(
             raise HTTPException(status_code=400, detail=error)
 
         if audio2_file:
-            success, path, error = await file_handler.save_upload_file(
-                audio2_file, task.task_id, "audio2"
+            success, path, error = await file_handler.save_file(
+                os.path.join(TaskConfig.UPLOAD_DIR, audio2_file), task.task_id, "audio2"
             )
             if not success:
                 file_handler.delete_task_files(task.task_id)

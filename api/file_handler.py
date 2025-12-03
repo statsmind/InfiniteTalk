@@ -30,6 +30,68 @@ class FileHandler:
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.audio_save_dir.mkdir(parents=True, exist_ok=True)
 
+    async def save_file(
+        self,
+        file: str,
+        task_id: str,
+        file_type: str = "media"
+    ) -> Tuple[bool, Optional[str], Optional[str]]:
+        """
+        保存上传的文件
+
+        Args:
+            file: FastAPI UploadFile 对象
+            task_id: 任务ID
+            file_type: 文件类型 (media, audio1, audio2)
+
+        Returns:
+            (成功标志, 文件路径, 错误消息)
+        """
+        try:
+            # 验证文件扩展名
+            file_ext = Path(file).suffix.lower()
+            if file_type == "media":
+                allowed_exts = (
+                    TaskConfig.ALLOWED_IMAGE_EXTENSIONS
+                    | TaskConfig.ALLOWED_VIDEO_EXTENSIONS
+                )
+            else:  # audio
+                allowed_exts = TaskConfig.ALLOWED_AUDIO_EXTENSIONS
+
+            if file_ext not in allowed_exts:
+                return False, None, f"不支持的文件格式: {file_ext}"
+
+            # 创建任务专属目录
+            task_dir = self.upload_dir / task_id
+            task_dir.mkdir(parents=True, exist_ok=True)
+
+            # 生成文件名
+            filename = f"{file_type}{file_ext}"
+            file_path = task_dir / filename
+
+            # 保存文件
+            with open(file_path, "wb") as f:
+                with open(file, 'rb') as file_fp:
+                    content = file_fp.read()
+                    # 验证文件大小
+                    if len(content) > TaskConfig.MAX_FILE_SIZE:
+                        return False, None, f"文件大小超过限制 ({TaskConfig.MAX_FILE_SIZE / 1024 / 1024}MB)"
+                    f.write(content)
+
+            # 如果是图像文件，验证是否可以打开
+            if file_ext in TaskConfig.ALLOWED_IMAGE_EXTENSIONS:
+                try:
+                    img = Image.open(file_path)
+                    img.verify()
+                except Exception as e:
+                    os.remove(file_path)
+                    return False, None, f"无效的图像文件: {str(e)}"
+
+            return True, str(file_path), None
+
+        except Exception as e:
+            return False, None, f"保存文件失败: {str(e)}"
+
     async def save_upload_file(
         self,
         file: UploadFile,
