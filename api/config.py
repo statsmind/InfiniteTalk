@@ -114,7 +114,7 @@ class GenerationConfig:
     COLOR_CORRECTION_STRENGTH = 1.0
 
     # 加速选项
-    USE_TEACACHE = True
+    USE_TEACACHE = bool(os.getenv("USE_TEACACHE", "False"))
     TEACACHE_THRESH = 0.2
     USE_APG = False
     APG_MOMENTUM = -0.75
