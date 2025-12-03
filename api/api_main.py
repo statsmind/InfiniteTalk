@@ -295,6 +295,7 @@ def process_task(task_id: str):
         extra_args.use_apg = use_apg
         extra_args.apg_momentum = GenerationConfig.APG_MOMENTUM
         extra_args.apg_norm_threshold = GenerationConfig.APG_NORM_THRESHOLD
+        extra_args.size = size
 
         # 生成视频
         logger.info(f"Generating video for task {task_id}")
