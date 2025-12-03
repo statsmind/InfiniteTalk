@@ -7,6 +7,12 @@ from pathlib import Path
 # 基础路径
 BASE_DIR = Path(__file__).parent.parent
 
+DEFAULT_NUM_PERSISTENT_PARAM_IN_DIT = os.getenv("NUM_PERSISTENT_PARAM_IN_DIT", "0")
+if DEFAULT_NUM_PERSISTENT_PARAM_IN_DIT == "-1":
+    DEFAULT_NUM_PERSISTENT_PARAM_IN_DIT = None
+else:
+    DEFAULT_NUM_PERSISTENT_PARAM_IN_DIT = int(DEFAULT_NUM_PERSISTENT_PARAM_IN_DIT)
+
 # 模型配置
 class ModelConfig:
     """模型路径配置"""
@@ -38,7 +44,7 @@ class ModelConfig:
     DEVICE = os.getenv("DEVICE", "cuda:0")
 
     # 显存管理参数
-    NUM_PERSISTENT_PARAM_IN_DIT = int(os.getenv("NUM_PERSISTENT_PARAM_IN_DIT", "0"))
+    NUM_PERSISTENT_PARAM_IN_DIT = DEFAULT_NUM_PERSISTENT_PARAM_IN_DIT
 
 # 服务器配置
 class ServerConfig:

@@ -18,6 +18,7 @@ services:
       - INFINITETALK_DIR=/app/weights/InfiniteTalk/single/infinitetalk.safetensors
       - QUANT_DIR=/app/weights/InfiniteTalk/quant_models/infinitetalk_single_fp8.safetensors
       - QUANT=fp8
+      - NUM_PERSISTENT_PARAM_IN_DIT=0
     deploy:
       resources:
         reservations:
