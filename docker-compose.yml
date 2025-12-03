@@ -16,8 +16,8 @@ services:
       - CKPT_DIR=/app/weights/Wan2.1-I2V-14B-480P
       - WAV2VEC_DIR=/app/weights/chinese-wav2vec2-base
       - INFINITETALK_DIR=/app/weights/InfiniteTalk/single/infinitetalk.safetensors
-      - QUANT_DIR=/app/weights/InfiniteTalk/quant_models/infinitetalk_single_int8.safetensors"
-      - QUANT=int8
+      - QUANT_DIR=/app/weights/InfiniteTalk/quant_models/infinitetalk_single_fp8.safetensors
+      - QUANT=fp8
     deploy:
       resources:
         reservations:
